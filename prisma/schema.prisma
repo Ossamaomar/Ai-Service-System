@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ENUMS
+enum UserRole {
+  ADMIN
+  RECEPTION
+  TECHNICIAN
+  STORE_MANAGER
+}
+
+enum TicketStatus {
+  RECEIVED
+  APPROVED
+  DIAGNOSIS
+  REPAIR
+  WAITING_APPROVAL
+  WAITING_PARTS
+  UNDER_REPAIR
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+
+// SCHEMAS
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  phone     String?    
+  role      UserRole
+  isActive  Boolean   @default(true)
+
+  // Relations
+  assignedTickets Ticket[] @relation("AssignedTechnician")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Ticket {
+  id               String       @id @default(cuid())
+  
+  ticketNumber     String       @unique   // SG-2025-0001 (generated in backend)
+  deviceCode       String       @unique   // SJ-A8X92KD992
+
+  // Relations
+  customer         Customer     @relation(fields: [customerId], references: [id])
+  customerId       String
+
+  assignedTech     User?        @relation("AssignedTechnician", fields: [assignedTechId], references: [id])
+  assignedTechId   String?
+
+  status           TicketStatus @default(RECEIVED)
+
+  urgent           Boolean    @default(false)
+
+  parts            TicketPart[]
+  repairs          TicketRepair[]
+
+  totalRepairsCost Float      @default(0)
+  totalPartsCost   Float      @default(0)
+  totalPrice       Float      @default(0)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  email     String?   @unique
+
+  tickets   Ticket[]
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+}
+
+model Part {
+  id              String        @id @default(cuid())
+  name            String
+  model           String?
+  sellingPrice    Float
+  quantity        Int           @default(0)
+  minimumQuantity Int           @default(0)
+
+  // Relations
+  ticketParts     TicketPart[]
+  // partRequests    PartRequest[] // if technician requested this part
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model TicketPart {
+  id          String   @id @default(cuid())
+
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  ticketId    String
+
+  partId      String
+  part        Part     @relation(fields: [partId], references: [id])
+
+  quantity    Int      @default(1)
+  priceAtUse  Float    // store the price used at that time (important!)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([partId, ticketId])
+}
+
+model Repair {
+  id           String        @id @default(cuid())
+  
+  name         String        @unique
+  price        Float         @default(0)
+
+  repairs      TicketRepair[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model TicketRepair {
+  id            String      @id @default(cuid())
+
+  ticketId      String
+  ticket        Ticket      @relation(fields: [ticketId], references: [id])
+
+  repairId      String      
+  repair        Repair      @relation(fields: [repairId], references: [id])
+
+  priceAtUse    Float       // store the price used at that time (important!)
+  notes         String?
+
+  createdAt     DateTime    @default(now())
+
+  @@unique([repairId, ticketId])
+}
+
+
+
+
