@@ -59,9 +59,16 @@ export class TicketPartModel {
     return await prisma.ticketPart.findUnique({ where: { id } });
   }
 
+  static async getAllPartsOnTicket(ticketId: string) {
+    return await prisma.ticketPart.findMany({
+      where: { ticketId },
+      include: { part: true },
+    });
+  }
+
   static async update(id: string, data: TicketPartUpdateInput) {
     return prisma.$transaction(async (tx) => {
-      // 1. Create a ticket part.
+      // 1. Update a ticket part.
       const ticketPart = await prisma.ticketPart.update({
         where: { id },
         data,
@@ -109,7 +116,7 @@ export class TicketPartModel {
 
   static async delete(id: string) {
     return prisma.$transaction(async (tx) => {
-      // 1. Create a ticket part.
+      // 1. Delete a ticket part.
       const ticketPart = await prisma.ticketPart.delete({ where: { id } });
 
       // 2. Calculate the totalRepairsCost, totalPrice and totalPrice.

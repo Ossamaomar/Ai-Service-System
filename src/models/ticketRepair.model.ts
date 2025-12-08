@@ -59,9 +59,16 @@ export class TicketRepairModel {
     return await prisma.ticketRepair.findUnique({ where: { id } });
   }
 
+  static async getAllRepairsOnTicket(ticketId: string) {
+    return await prisma.ticketRepair.findMany({
+      where: { ticketId },
+      include: { repair: true },
+    });
+  }
+
   static async update(id: string, data: TicketRepairUpdateInput) {
     return prisma.$transaction(async (tx) => {
-      // 1. Create a ticket repair.
+      // 1. Update a ticket repair.
       const ticketRepair = await prisma.ticketRepair.update({
         where: { id },
         data,
@@ -109,7 +116,7 @@ export class TicketRepairModel {
 
   static async delete(id: string) {
     return prisma.$transaction(async (tx) => {
-      // 1. Create a ticket repair.
+      // 1. Delete a ticket repair.
       const ticketRepair = await await prisma.ticketRepair.delete({
         where: { id },
       });

@@ -43,6 +43,28 @@ export class TicketPartController {
     }
   }
 
+  static async getAllPartsOnTicket(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const ticketParts = await TicketPartService.getAllPartsOnTicket(
+        req.params.ticketId!
+      );
+
+      res
+        .status(200)
+        .json(
+          new ApiResponse({
+            status: "success",
+            results: ticketParts.length,
+            data: ticketParts,
+          })
+        );
+    } catch (error) {}
+  }
+
   static async update(req: Request, res: Response, next: NextFunction) {
     try {
       const part = await TicketPartService.updateTicketPart(

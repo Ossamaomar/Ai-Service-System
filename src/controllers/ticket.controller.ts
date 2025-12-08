@@ -16,18 +16,6 @@ export class TicketController {
     }
   }
 
-  static async get(req: Request, res: Response, next: NextFunction) {
-    try {
-      const ticket = await TicketService.getTicket(req.params.id!);
-
-      res
-        .status(200)
-        .json(new ApiResponse({ status: "success", data: ticket }));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       if (Number(req.query.page) <= 0) {
@@ -43,6 +31,18 @@ export class TicketController {
           data: tickets,
         })
       );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async get(req: Request, res: Response, next: NextFunction) {
+    try {
+      const ticket = await TicketService.getTicket(req.params.id!);
+
+      res
+        .status(200)
+        .json(new ApiResponse({ status: "success", data: ticket }));
     } catch (error) {
       return next(error);
     }

@@ -43,6 +43,26 @@ export class TicketRepairController {
     }
   }
 
+  static async getAllRepairsOnTicket(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const ticketParts = await TicketRepairService.getAllRepairsOnTicket(
+        req.params.ticketId!
+      );
+
+      res.status(200).json(
+        new ApiResponse({
+          status: "success",
+          results: ticketParts.length,
+          data: ticketParts,
+        })
+      );
+    } catch (error) {}
+  }
+
   static async update(req: Request, res: Response, next: NextFunction) {
     try {
       const part = await TicketRepairService.updateTicketRepair(
