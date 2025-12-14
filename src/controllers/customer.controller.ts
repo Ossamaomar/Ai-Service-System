@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { CustomerService } from "src/services/customer.service";
 import { CustomerCreateInputs } from "src/types";
 import { ApiError } from "src/utils/ApiError";
+import { APIFeatures } from "src/utils/ApiFeatures";
 import { ApiResponse } from "src/utils/ApiResponse";
 
 export class CustomerController {
@@ -19,7 +20,7 @@ export class CustomerController {
 
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const customers = await CustomerService.getAll();
+      const customers = await CustomerService.getAll(req.query);
 
       res.status(200).json(
         new ApiResponse({
@@ -33,45 +34,32 @@ export class CustomerController {
     }
   }
 
+  static async searchCustomer(req: Request, res: Response, next: NextFunction) {
+    
+    try {
+      let customer: any = null;
+
+      if (req.query.name) {
+        customer = await CustomerService.getByName(req.query.name!);
+      } else if (req.query.phone) {
+        customer = await CustomerService.getByPhone(req.query.phone!);
+      } else if (req.query.email) {
+        customer = await CustomerService.getByEmail(req.query.email!);
+      } else {
+        throw new ApiError(400, "Provide a field to search the customer with");
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse({ status: "success", data: customer }));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   static async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const customer = await CustomerService.getById(req.params.id!);
-
-      res
-        .status(200)
-        .json(new ApiResponse({ status: "success", data: customer }));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async getByPhone(req: Request, res: Response, next: NextFunction) {
-    try {
-      const customer = await CustomerService.getByPhone(req.params.phone!);
-
-      res
-        .status(200)
-        .json(new ApiResponse({ status: "success", data: customer }));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async getByName(req: Request, res: Response, next: NextFunction) {
-    try {
-      const customer = await CustomerService.getByName(req.params.name!);
-
-      res
-        .status(200)
-        .json(new ApiResponse({ status: "success", data: customer }));
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  static async getByEmail(req: Request, res: Response, next: NextFunction) {
-    try {
-      const customer = await CustomerService.getByEmail(req.params.email!);
 
       res
         .status(200)

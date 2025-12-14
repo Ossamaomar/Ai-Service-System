@@ -1,6 +1,6 @@
 export class ApiResponse {
   status: "success" | "fail" | "error";
-  data: any;
+  data?: any;
   token?: string;
   message?: string;
   results?: number;
@@ -13,7 +13,7 @@ export class ApiResponse {
     results,
   }: {
     status: "success" | "fail" | "error";
-    data: any;
+    data?: any;
     token?: string;
     message?: string;
     results?: number;
@@ -28,6 +28,8 @@ export class ApiResponse {
     if (results) {
       this.results = results;
     }
-    this.data = data;
+    if (data) {
+      this.data = data;
+    }
   }
 }

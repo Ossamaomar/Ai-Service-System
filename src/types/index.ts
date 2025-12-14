@@ -26,5 +26,6 @@ export type CreateTicketInputs = {
   customerId: string;
   urgent: boolean;
   assignedTechId?: string;
+  deviceId: string;
   status?: TicketStatus;
 };

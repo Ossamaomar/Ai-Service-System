@@ -6,10 +6,15 @@ import { TicketModel } from "src/models/ticket.model";
 import { TicketRepairModel } from "src/models/ticketRepair.model";
 import { ApiError } from "src/utils/ApiError";
 import { APIFeatures } from "src/utils/ApiFeatures";
+import { normalizeNullable, validateData } from "src/utils/helpers";
+import { CreateTicketRepairDTO, createTicketRepairSchema } from "src/validators/ticketRepairValidators";
 
 export class TicketRepairService {
-  static async createTicketRepair(data: TicketRepairCreateInput) {
-    const ticketRepair = await TicketRepairModel.create(data);
+  static async createTicketRepair(data: CreateTicketRepairDTO) {
+    const validatedData = validateData(createTicketRepairSchema, data);
+
+    const prismaData = normalizeNullable(validatedData);
+    const ticketRepair = await TicketRepairModel.create(prismaData as TicketRepairCreateInput);
 
     return ticketRepair;
   }
@@ -27,11 +32,11 @@ export class TicketRepairService {
     return ticketRepair;
   }
 
-    static async getAllRepairsOnTicket(ticketId: string) {
-      const ticketParts = await TicketRepairModel.getAllRepairsOnTicket(ticketId);
-  
-      return ticketParts;
-    }
+  static async getAllRepairsOnTicket(ticketId: string) {
+    const ticketParts = await TicketRepairModel.getAllRepairsOnTicket(ticketId);
+
+    return ticketParts;
+  }
 
   static async updateTicketRepair(id: string, data: TicketRepairUpdateInput) {
     const ticketRepair = await TicketRepairModel.update(id, data);
@@ -44,6 +49,4 @@ export class TicketRepairService {
 
     return ticketRepair;
   }
-
-
 }

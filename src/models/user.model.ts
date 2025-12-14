@@ -22,22 +22,26 @@ export class UserModel {
   }
 
   static async findByPhone(phone: string) {
-    return await prisma.user.findMany({
+    return await prisma.user.findUnique({
       where: { phone },
+    });
+  }
+  
+  static async findByResetToken(passwordResetToken: string) {
+    return await prisma.user.findUnique({
+      where: { passwordResetToken },
     });
   }
 
   // Get all users
-  static async findAll(skip = 0, take = 10) {
+  static async findAll(options: any) {
     return await prisma.user.findMany({
-      skip,
-      take,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
+      ...options,
+      omit: {
+        password: true,
+        passwordConfirm: true,
+        passwordResetToken: true,
+        passwordResetExpires: true,
       },
     });
   }

@@ -16,16 +16,16 @@ datasource db {
 // ENUMS
 enum UserRole {
   ADMIN
-  RECEPTION
+  RECEPTIONIST
   TECHNICIAN
   STORE_MANAGER
+  CUSTOMER
 }
 
 enum TicketStatus {
   RECEIVED
   APPROVED
   DIAGNOSIS
-  REPAIR
   WAITING_APPROVAL
   WAITING_PARTS
   UNDER_REPAIR
@@ -34,22 +34,80 @@ enum TicketStatus {
   CANCELLED
 }
 
+enum ReceptionistTicketStatus {
+  RECEIVED
+  APPROVED
+  READY
+  DELIVERED
+  CANCELLED
+}
+enum TechnicianTicketStatus {
+  DIAGNOSIS
+  UNDER_REPAIR
+  WAITING_APPROVAL
+  WAITING_PARTS 
+}
+
+enum DeviceType {
+  LAPTOP
+  CAMERA
+  PRINTER
+  OTHER
+}
+
+enum Branches {
+  FARQ
+  SOUQ
+}
 
 // SCHEMAS
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String    @unique
-  password  String
-  phone     String?    
-  role      UserRole
-  isActive  Boolean   @default(true)
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  password          String
+  passwordConfirm   String     @default("")
+  phone             String     @unique
+  role              UserRole
+  isActive          Boolean    @default(true)
+  branch            Branches?
 
   // Relations
-  assignedTickets Ticket[] @relation("AssignedTechnician")
+  assignedTickets   Ticket[]   @relation("AssignedTechnician")
+  customer          Customer?  @relation("UserCustomer")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  // OTP Fields
+  isPhoneVerified       Boolean   @default(false)
+  phoneVerificationOTP  String?
+  otpExpiresAt          DateTime?
+  otpAttempts           Int       @default(0)
+
+  // Password Fields 
+  passwordChangedAt    DateTime @default(now())
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime @default(now()) 
+
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt @default(now())
+}
+
+model Customer {  
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  email     String?   @unique
+
+  userId    String?   @unique
+  user      User?     @relation(name: "UserCustomer", fields: [userId], references: [id])
+
+  // device           Device[]     @relation(fields: [deviceId], references: [id])
+  // deviceId         String
+
+  tickets   Ticket[]
+  devices   Device[]
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
 }
 
 model Ticket {
@@ -59,15 +117,29 @@ model Ticket {
   deviceCode       String       @unique   // SJ-A8X92KD992
 
   // Relations
+  device           Device     @relation(fields: [deviceId], references: [id])
+  deviceId         String
+
   customer         Customer     @relation(fields: [customerId], references: [id])
   customerId       String
 
   assignedTech     User?        @relation("AssignedTechnician", fields: [assignedTechId], references: [id])
   assignedTechId   String?
 
-  status           TicketStatus @default(RECEIVED)
 
-  urgent           Boolean    @default(false)
+  status           TicketStatus @default(RECEIVED)
+  urgent           Boolean      @default(false)
+  branch           Branches       
+  notes            String?
+  password         String?
+
+  includesBattery  Boolean      @default(false)
+  includesCharger  Boolean      @default(false)
+  missingSkrews    Boolean      @default(false)
+  hasScratches     Boolean      @default(false)
+  wantsBackup      Boolean      @default(false)
+  underWarranty    Boolean      @default(false)
+
 
   parts            TicketPart[]
   repairs          TicketRepair[]
@@ -78,17 +150,6 @@ model Ticket {
 
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
-}
-
-model Customer {
-  id        String    @id @default(cuid())
-  name      String
-  phone     String    @unique
-  email     String?   @unique
-
-  tickets   Ticket[]
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
 }
 
 model Part {
@@ -116,7 +177,7 @@ model TicketPart {
   partId      String
   part        Part     @relation(fields: [partId], references: [id])
 
-  quantity    Int      @default(1)
+  quantity    Int      
   priceAtUse  Float    // store the price used at that time (important!)
 
   createdAt   DateTime @default(now())
@@ -152,6 +213,21 @@ model TicketRepair {
 
   @@unique([repairId, ticketId])
 }
+
+model Device {
+  id             String       @id @default(cuid())
+  serialNumber   String?      @unique  // <--- correct
+  type           DeviceType
+  otherType      String?
+  brand          String
+  model          String?
+  color          String
+  tickets        Ticket[]
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  customerId     String
+  createdAt      DateTime     @default(now())
+}
+
 
 
 

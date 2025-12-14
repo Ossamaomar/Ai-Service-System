@@ -1,10 +1,21 @@
 import { PartCreateInput, PartUpdateInput } from "generated/prisma/models";
 import { PartModel } from "src/models/part.model";
 import { APIFeatures } from "src/utils/ApiFeatures";
+import { normalizeNullable, validateData } from "src/utils/helpers";
+import {
+  CreatePartDTO,
+  createPartSchema,
+  UpdatePartDTO,
+  updatePartSchema,
+} from "src/validators/partValidators";
 
 export class PartService {
-  static async createPart(data: PartCreateInput) {
-    const part = await PartModel.create(data);
+  static async createPart(data: CreatePartDTO) {
+    const validatedData = validateData(createPartSchema, data);
+
+    const prismaData = normalizeNullable(validatedData);
+
+    const part = await PartModel.create(prismaData as PartCreateInput);
 
     return part;
   }
@@ -22,8 +33,12 @@ export class PartService {
     return part;
   }
 
-  static async updatePart(id: string, data: PartUpdateInput) {
-    const part = await PartModel.update(id, data);
+  static async updatePart(id: string, data: UpdatePartDTO) {
+    const validatedData = validateData(updatePartSchema, data);
+
+    const prismaData = normalizeNullable(validatedData);
+    
+    const part = await PartModel.update(id, prismaData);
 
     return part;
   }

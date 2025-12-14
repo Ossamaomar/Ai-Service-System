@@ -22,8 +22,8 @@ export class CustomerModel {
   }
 
   static async findByPhone(phone: string) {
-    return await prisma.customer.findMany({
-      where: { phone: { contains: phone } },
+    return await prisma.customer.findUnique({
+      where: { phone },
     });
   }
 
@@ -34,20 +34,8 @@ export class CustomerModel {
   }
 
   // Get all customers
-  static async findAll(skip = 0, take = 10) {
-    return await prisma.customer.findMany({
-      skip,
-      take,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        isActive: true,
-        createdAt: true,
-      },
-      where: { isActive: true },
-    });
+  static async findAll(options: any) {
+    return await prisma.customer.findMany(options);
   }
 
   // Update customer
@@ -57,6 +45,7 @@ export class CustomerModel {
       data,
     });
   }
+  
 
   // Delete customer
   static async delete(id: string) {

@@ -8,18 +8,25 @@ const router = express.Router();
 router.use(AuthController.protectRoute);
 
 router
+  .use(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"))
   .route("/")
-  .post(
-    AuthController.authorizeRoute("ADMIN", "RECEPTION"),
-    TicketController.create
-  )
+  .post(TicketController.create)
   .get(TicketController.getAll);
 
 router
   .route("/:id")
   .get(TicketController.get)
-  .patch(AuthController.authorizeRoute("ADMIN", "RECEPTION", "TECHNICIAN"), TicketController.update)
-  .delete(AuthController.authorizeRoute("ADMIN", "RECEPTION"), TicketController.delete);
+  .patch(
+    AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "TECHNICIAN"),
+    TicketController.update
+  )
+  .delete(
+    AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"),
+    TicketController.delete
+  );
+router
+  .route("/currentUser")
+  .get(AuthController.authorizeRoute("CUSTOMER"), TicketController.getAll)
 
 router.route("/:id/parts").get(TicketPartController.getAllPartsOnTicket);
 router.route("/:id/repairs").get(TicketRepairController.getAllRepairsOnTicket);

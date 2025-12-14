@@ -4,7 +4,7 @@ import { TicketPartController } from "src/controllers/ticketPart.controller";
 
 const router = Router();
 
-router.use(AuthController.protectRoute);
+router.use(AuthController.protectRoute, AuthController.authorizeRoute("ADMIN", "TECHNICIAN", "RECEPTIONIST"),);
 
 router
   .route("/")

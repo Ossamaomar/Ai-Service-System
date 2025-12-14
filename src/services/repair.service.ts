@@ -1,10 +1,20 @@
 import { RepairCreateInput, RepairUpdateInput } from "generated/prisma/models";
 import { RepairModel } from "src/models/repair.model";
 import { APIFeatures } from "src/utils/ApiFeatures";
+import { normalizeNullable, validateData } from "src/utils/helpers";
+import {
+  CreateRepairDTO,
+  createRepairSchema,
+  UpdateRepairDTO,
+  updateRepairSchema,
+} from "src/validators/repairValidators";
 
 export class RepairService {
-  static async createRepair(data: RepairCreateInput) {
-    const repair = await RepairModel.create(data);
+  static async createRepair(data: CreateRepairDTO) {
+    const validatedData = validateData(createRepairSchema, data);
+
+    const prismaData = normalizeNullable(validatedData);
+    const repair = await RepairModel.create(prismaData as RepairCreateInput);
 
     return repair;
   }
@@ -22,8 +32,11 @@ export class RepairService {
     return repair;
   }
 
-  static async updateRepair(id: string, data: RepairUpdateInput) {
-    const repair = await RepairModel.update(id, data);
+  static async updateRepair(id: string, data: UpdateRepairDTO) {
+    const validatedData = validateData(updateRepairSchema, data);
+
+    const prismaData = normalizeNullable(validatedData);
+    const repair = await RepairModel.update(id, prismaData);
 
     return repair;
   }

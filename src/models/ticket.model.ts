@@ -9,6 +9,24 @@ export class TicketModel {
   static async get(id: string) {
     return await prisma.ticket.findUnique({
       where: { id },
+      include: {
+        parts: true,
+        repairs: true,
+        assignedTech: {
+          omit: {
+            password: true,
+            passwordChangedAt: true,
+            passwordResetExpires: true,
+            otpAttempts: true,
+            otpExpiresAt: true,
+            passwordConfirm: true,
+            passwordResetToken: true,
+            phoneVerificationOTP: true,
+          },
+        },
+        customer: true,
+        device: true,
+      },
     });
   }
 

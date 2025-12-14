@@ -4,29 +4,24 @@ import { CustomerController } from "src/controllers/customer.controller";
 
 const router = express.Router();
 
-router.use(AuthController.protectRoute, AuthController.authorizeRoute("ADMIN", "RECEPTION"));
+router.use(AuthController.protectRoute);
 
 router
   .route("/")
-  .post(CustomerController.create)
-  .get(CustomerController.getAll);
+  .get(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "TECHNICIAN"), CustomerController.getAll)
+  .post(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "CUSTOMER"), CustomerController.create);
 
+router
+  .route("/search")
+  .get(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "TECHNICIAN", "CUSTOMER"), CustomerController.searchCustomer)
+  
 router
   .route("/:id")
-  .get(CustomerController.getById)
-  .patch(CustomerController.update)
-  .delete(CustomerController.delete);
+  .get(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "CUSTOMER"), CustomerController.getById)
+  .patch(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"), CustomerController.update)
+  .delete(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"), CustomerController.delete);
 
-router
-  .route("/getByPhone/:phone")
-  .get(CustomerController.getByPhone);
 
-router
-  .route("/getByName/:name")
-  .get(CustomerController.getByName);
 
-router
-  .route("/getByEmail/:email")
-  .get(CustomerController.getByEmail);
 
 export default router;
