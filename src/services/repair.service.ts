@@ -20,7 +20,12 @@ export class RepairService {
   }
 
   static async getAllRepairs(query: any) {
-    const options = new APIFeatures(query).filter().sort().select().paginate();
+    let options;
+    if (query.page) {
+      options = new APIFeatures(query).filter().sort().select().paginate();
+    } else {
+      options = {};
+    }
     const repairs = await RepairModel.getAll(options.options);
 
     return repairs;

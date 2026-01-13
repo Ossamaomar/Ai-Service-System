@@ -53,20 +53,71 @@ export class AuthController {
     }
   }
 
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.clearCookie("jwt", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/"
+      });
+
+      res.status(200).json({
+        status: "success",
+        message: "Logged out successfully",
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // static async protectRoute(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     // 1. Check if token is provided in the request
+  //     if (
+  //       !req.headers.authorization ||
+  //       !req.headers.authorization.startsWith("Bearer")
+  //     ) {
+  //       throw new ApiError(401, "Please login first to do this action");
+  //     }
+
+  //     // 2. Verify token didn't expire
+  //     const decoded: any = verifyToken(
+  //       req.headers.authorization.split("Bearer ")[1]!
+  //     );
+
+  //     // 3. Check if user still exists
+  //     const user = await UserModel.findById(decoded.id);
+  //     if (!user) {
+  //       throw new ApiError(401, "User belonging to this token no longer exist");
+  //     }
+
+  //     // 4. Check if password changed after token
+  //     const isChangedAfter = checkPasswordChangedAfterTokenCreated(
+  //       decoded.iat,
+  //       user
+  //     );
+
+  //     if (isChangedAfter) {
+  //       throw new ApiError(401, "Please login again after password changed");
+  //     }
+
+  //     req.user = user;
+  //     next();
+  //   } catch (error) {
+  //     return next(error);
+  //   }
+  // }
+
   static async protectRoute(req: Request, res: Response, next: NextFunction) {
     try {
       // 1. Check if token is provided in the request
-      if (
-        !req.headers.authorization ||
-        !req.headers.authorization.startsWith("Bearer")
-      ) {
+      if (!req.cookies.jwt) {
         throw new ApiError(401, "Please login first to do this action");
       }
 
       // 2. Verify token didn't expire
-      const decoded: any = verifyToken(
-        req.headers.authorization.split("Bearer ")[1]!
-      );
+      const decoded: any = verifyToken(req.cookies.jwt);
 
       // 3. Check if user still exists
       const user = await UserModel.findById(decoded.id);
@@ -89,6 +140,13 @@ export class AuthController {
     } catch (error) {
       return next(error);
     }
+  }
+
+  static async current(req: Request, res: Response, next: NextFunction) {
+    res.status(200).json({
+      status: "success",
+      data: req.user,
+    });
   }
 
   static authorizeRoute(...roles: UserRole[]) {
@@ -125,7 +183,7 @@ export class AuthController {
       res.status(200).json(
         new ApiResponse({
           status: "success",
-          message: "Your password has successfully updated",
+          message: "Your password has successfully updated. Now login again",
         })
       );
     } catch (error) {
@@ -157,13 +215,12 @@ export class AuthController {
   static async resendOTP(req: Request, res: Response, next: NextFunction) {
     try {
       const { phone } = req.body;
-      const result = await AuthService.resendOTP(phone);
+      await AuthService.resendOTP(phone);
 
       res.status(200).json(
         new ApiResponse({
           status: "success",
-          data: result,
-          message: "OTP resent successfully",
+          message: "New OTP sent successfully",
         })
       );
     } catch (error) {

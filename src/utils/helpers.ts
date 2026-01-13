@@ -80,26 +80,20 @@ export function checkPasswordChangedAfterTokenCreated(
 
 export function createSendToken(user: any, statusCode: number, res: Response) {
   const token = signToken(user.id);
-  const cookieOptions = {
-    secure: false,
-    httpOnly: true,
-    expires: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour
-  };
-
-  if (process.env.NODE_ENV === "production") {
-    cookieOptions.secure = true;
-  }
-
   user.password = undefined;
 
-  res.cookie("jwt", token, cookieOptions);
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    secure: false, // true in production (HTTPS)
+    sameSite: "lax", // "none" for cross-origin in production
+    maxAge:  24 * 60 * 60 * 1000, // 7 days
+    path: "/", // Important: available on all paths
+  });
   res.status(statusCode).json({
     status: "success",
-    token,
     data: user,
   });
 }
-
 
 export function cleanUndefined<T extends object>(obj: T): Partial<T> {
   return Object.fromEntries(

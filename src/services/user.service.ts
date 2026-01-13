@@ -1,5 +1,6 @@
 import { hash } from "bcrypt";
 import { UserCreateInput, UserUpdateInput } from "generated/prisma/models";
+import { CustomerModel } from "src/models/customer.model";
 import { UserModel } from "src/models/user.model";
 import { ApiError } from "src/utils/ApiError";
 import { APIFeatures } from "src/utils/ApiFeatures";
@@ -24,7 +25,7 @@ export class UserService {
     if (role === "RECEPTIONIST" && !branch) {
       throw new ApiError(400, "Please provide a branch for the receptionist");
     }
-    
+
     if (role === "TECHNICIAN" && !branch) {
       throw new ApiError(400, "Please provide a branch for the technician");
     }
@@ -136,8 +137,7 @@ export class UserService {
   ) {
     const validatedData = validateData(updateUserSchema, data);
 
-    const user = await UserModel.update(id, validatedData);
-
+    const user = await UserModel.updateCurrent(id, validatedData);
     const {
       password: _pw,
       passwordConfirm: _pc,
@@ -153,5 +153,11 @@ export class UserService {
     const user = await UserModel.delete(id);
 
     return user;
+  }
+
+  static async getTechniciansOverview(reqQuery: any) {
+    const technicians = await UserModel.getTechniciansOverview(reqQuery);
+
+    return technicians;
   }
 }

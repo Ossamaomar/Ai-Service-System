@@ -4,6 +4,8 @@ import morgan from "morgan";
 import { parse } from "qs";
 import router from "./routes";
 import { errorHandler } from "./middlewares/error.middleware";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 // import rateLimit from "express-rate-limit";
 
 const app: Application = express();
@@ -16,6 +18,15 @@ const app: Application = express();
 
 // Set secure HTTP headers
 app.use(helmet());
+
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+)
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
@@ -33,6 +44,9 @@ app.use(express.static(`${__dirname}/public`));
 
 // Parsing nested queries
 app.set('query parser', (str: string) => parse(str));
+
+
+
 
 // Adding the request time to all requests
 app.use((req: any, res: Response, next: NextFunction) => {

@@ -4,19 +4,49 @@ import { TicketPartController } from "src/controllers/ticketPart.controller";
 
 const router = Router();
 
-router.use(AuthController.protectRoute, AuthController.authorizeRoute("ADMIN", "TECHNICIAN", "RECEPTIONIST"),);
+router.use(AuthController.protectRoute);
 
 router
   .route("/")
-  .get(TicketPartController.getAll)
-  .post(TicketPartController.create);
+  .get(
+    AuthController.authorizeRoute("ADMIN", "TECHNICIAN"),
+    TicketPartController.getAll
+  )
+  .post(
+    AuthController.authorizeRoute("ADMIN", "TECHNICIAN"),
+    TicketPartController.create
+  );
 
 router
   .route("/:id")
-  .get(TicketPartController.get)
-  .patch(TicketPartController.update)
-  .delete(TicketPartController.delete);
+  .get(
+    AuthController.authorizeRoute(
+      "ADMIN",
+      "TECHNICIAN",
+      "RECEPTIONIST",
+      "CUSTOMER"
+    ),
+    TicketPartController.get
+  )
+  .patch(
+    AuthController.authorizeRoute("ADMIN", "TECHNICIAN"),
+    TicketPartController.update
+  )
+  .delete(
+    AuthController.authorizeRoute("ADMIN", "TECHNICIAN"),
+    TicketPartController.delete
+  );
 
-router.route("/:id/parts").get(TicketPartController.getAllPartsOnTicket);
+router
+  .route("/:id/parts")
+  .get(
+    AuthController.authorizeRoute(
+      "ADMIN",
+      "TECHNICIAN",
+      "RECEPTIONIST",
+      "CUSTOMER"
+    ),
+    TicketPartController.getAllPartsOnTicket
+  );
 
 export default router;

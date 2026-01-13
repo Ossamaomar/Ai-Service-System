@@ -58,6 +58,45 @@ export class TicketController {
       return next(error);
     }
   }
+  
+  static async getAllForCurrentTechnician(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (Number(req.query.page) <= 0) {
+        throw new ApiError(400, "Please provide a valid page number");
+      }
+    
+      const tickets = await TicketService.getAllTicketsForTechnician(req.query, req.user?.id!);
+
+      res.status(200).json(
+        new ApiResponse({
+          status: "success",
+          results: tickets.length,
+          data: tickets,
+        })
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async assignForCurrentTechnician(req: Request, res: Response, next: NextFunction) {
+    try {
+
+    if (!req.params.id) {
+      throw new ApiError(400, "Please provide the ticket id");
+    }
+      const ticket = await TicketService.assignForCurrentTechnician(req.params.id, req.user?.id!);
+
+      res.status(200).json(
+        new ApiResponse({
+          status: "success",
+          data: ticket,
+        })
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
 
   static async get(req: Request, res: Response, next: NextFunction) {
     try {

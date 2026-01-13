@@ -1,6 +1,7 @@
-import transporter from "../config/email";
+// import transporter from "../config/email";
 import { ApiError } from "../utils/ApiError";
-
+import sgMail from "@sendgrid/mail";
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 export class EmailService {
   // Send generic email
   static async sendEmail(options: {
@@ -10,17 +11,21 @@ export class EmailService {
     html?: string;
   }) {
     try {
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
+      const msg: any = {
+        from: process.env.SENDGRID_FROM_EMAIL!,
         to: options.to,
         subject: options.subject,
-        text: options.text,
-        html: options.html,
       };
 
-      const info = await transporter.sendMail(mailOptions);
-      console.log("✅ Email sent:", info.messageId);
-      return info;
+      if (options.html) {
+        msg.html = options.html;
+      }
+
+      if (options.text) {
+        msg.text = options.text;
+      }
+
+      await sgMail.send(msg);
     } catch (error) {
       console.error("❌ Email sending failed:", error);
       throw new ApiError(500, "Failed to send email");
@@ -49,9 +54,12 @@ export class EmailService {
   }
 
   // Send password reset email
-  static async sendPasswordResetEmail(user: { name: string; email: string }, resetToken: string) {
+  static async sendPasswordResetEmail(
+    user: { name: string; email: string },
+    resetToken: string
+  ) {
     // const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    const resetUrlDev = `http:127.0.0.1:3000/api/v1/users/resetPassword/${resetToken}`;
+    const resetUrlDev = `http://localhost:5173/auth/resetPassword/${resetToken}`;
 
     const subject = "Password Reset Request";
     const html = `

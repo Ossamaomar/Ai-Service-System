@@ -10,8 +10,16 @@ export class TicketModel {
     return await prisma.ticket.findUnique({
       where: { id },
       include: {
-        parts: true,
-        repairs: true,
+        parts: {
+          include: {
+            part: true,
+          },
+        },
+        repairs: {
+          include: {
+            repair: true,
+          },
+        },
         assignedTech: {
           omit: {
             password: true,
@@ -26,6 +34,17 @@ export class TicketModel {
         },
         customer: true,
         device: true,
+      },
+    });
+  }
+
+  static async assignTicket(id: string, techId: string) {
+    return await prisma.ticket.update({
+      where: {
+        id,
+      },
+      data: {
+        assignedTechId: techId,
       },
     });
   }
@@ -54,7 +73,39 @@ export class TicketModel {
   }
 
   static async getAll(options: any) {
-    return await prisma.ticket.findMany(options);
+    let { customerPhone, ...whereOptions } = options.where;
+    if (!customerPhone) customerPhone = "";
+    return await prisma.ticket.findMany({
+      ...options,
+      where: {
+        ...whereOptions,
+        customer: {
+          phone: { contains: `${customerPhone}` || "" },
+        },
+      },
+      include: { assignedTech: true, customer: true, device: true },
+    });
+  }
+
+  static async getAllForTechnician(options: any, techId: string) {
+    console.log(techId);
+    let { customerPhone, ...whereOptions } = options.where;
+    if (!customerPhone) customerPhone = "";
+    return await prisma.ticket.findMany({
+      ...options,
+      where: {
+        ...whereOptions,
+        customer: {
+          phone: { contains: `${customerPhone}` || "" },
+        },
+        AND: [
+          {
+            OR: [{ assignedTechId: techId }, { assignedTechId: null }],
+          },
+        ],
+      },
+      include: { assignedTech: true, customer: true, device: true },
+    });
   }
 
   static async update(id: string, data: Prisma.TicketUpdateInput) {

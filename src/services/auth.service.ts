@@ -44,8 +44,26 @@ export class AuthService {
         where: { email },
       });
 
-      if (existingUser) {
+      if (existingUser && existingUser.isPhoneVerified === true) {
         throw new ApiError(400, "User with this email already exists");
+      }
+
+      if (existingUser && existingUser.isPhoneVerified === false) {
+        try {
+          console.log("Existing phone: ", existingUser.phone);
+          await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              phoneVerificationOTP: hashedOtp,
+              otpExpiresAt: expiresAt,
+              otpAttempts: 0,
+            },
+          });
+          await OTPService.sendSMS(existingUser.phone, otp);
+          return existingUser;
+        } catch (error) {
+          throw new ApiError(500, "An error ourred during sending OTP");
+        }
       }
 
       // Check if customer exists by phone
@@ -76,6 +94,7 @@ export class AuthService {
           where: { id: existingCustomer.id },
           data: {
             email: newUser.email,
+            name: newUser.name,
             user: {
               connect: { id: newUser.id },
             },
@@ -108,16 +127,16 @@ export class AuthService {
         });
       }
 
+      try {
+        await OTPService.sendSMS(phone, otp);
+      } catch (error) {
+        throw new ApiError(500, "An error occurred during sending OTP");
+      }
+
       return newUser;
     });
 
     // Send OTP AFTER transaction succeeds (not part of DB transaction)
-    try {
-      await OTPService.sendSMS(phone, otp);
-    } catch (error) {
-      console.error("Failed to send OTP:", error);
-      // Don't throw - user is created, they can resend OTP
-    }
 
     // Remove sensitive fields
     const {
@@ -141,7 +160,7 @@ export class AuthService {
     );
 
     if (!user || !isCorrectPassword) {
-      throw new ApiError(400, "Email or password is not correct");
+      throw new ApiError(400, "Email or password is incorrect");
     }
 
     if (!user.isPhoneVerified) {
@@ -149,8 +168,14 @@ export class AuthService {
     }
 
     const {
-      // password: _pw,
-      // passwordConfirm: _pc,
+      password: _pw,
+      passwordConfirm: _pc,
+      phoneVerificationOTP: ___,
+      otpExpiresAt: ____,
+      otpAttempts: _____,
+      passwordResetToken: ______,
+      passwordResetExpires: _______,
+
       ...userWithoutPassword
     } = user;
     return userWithoutPassword;
@@ -173,7 +198,7 @@ export class AuthService {
     // Save hashed token to database
     await UserModel.update(user.id, {
       passwordResetToken: resetTokenHash,
-      passwordResetExpires: new Date(Date.now() + 5 * 60 * 1000), // 1 hour
+      passwordResetExpires: new Date(Date.now() + 5 * 60 * 1000), // 5 mins
     });
 
     // Send reset email
@@ -304,7 +329,6 @@ export class AuthService {
     return userWithoutSensitive;
   }
 
-  // Resend OTP
   static async resendOTP(phone: string) {
     const user = await UserModel.findByPhone(phone);
 

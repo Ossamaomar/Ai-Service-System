@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { TicketStatus, Branches } from "generated/prisma/enums.js";
 import { cleanUndefined } from "src/utils/helpers";
-
+export const DeviceTypeEnum = z.enum(["LAPTOP", "CAMERA", "PRINTER", "OTHER"], {
+  error: "Please select a valid device type",
+});
 export const createTicketSchema = z.object({
   // Required relations
   deviceId: z.cuid("Invalid device ID"),
@@ -22,6 +24,17 @@ export const createTicketSchema = z.object({
   hasScratches: z.boolean().optional().default(false),
   wantsBackup: z.boolean().optional().default(false),
   underWarranty: z.boolean().optional().default(false),
+});
+
+export const createDeviceSchema = z.object({
+  serialNumber: z.string().optional(),
+
+  type: DeviceTypeEnum,
+  otherType: z.string().optional(),
+  brand: z.string("The brand name is required").min(2, "Enter a valid brand name"),
+  model: z.string("The model name is required").min(1, "Enter a valid model name"),
+  color: z.string("The color name is required").min(3, "Enter a valid color name"),
+  customerId: z.cuid("Invalid customer ID"),
 });
 
 export const updateTicketSchema = z.object({

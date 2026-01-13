@@ -16,7 +16,7 @@ export class UserController {
 
   static async getCurrentUser(req: Request, res: Response, next: NextFunction) {
     if (!req.user) {
-      throw new ApiError(403, "You are not authorized to do this action")
+      throw new ApiError(403, "You are not authorized to do this action");
     }
     const {
       password: _pw,
@@ -105,4 +105,24 @@ export class UserController {
       return next(error);
     }
   }
+
+  static async getTechniciansOverview(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (Number(req.query.page) <= 0) {
+        throw new ApiError(400, "Please provide a valid page number");
+      }
+      const users = await UserService.getTechniciansOverview(req.query);
+
+      res.status(200).json(
+        new ApiResponse({
+          status: "success",
+          results: users.length,
+          data: users,
+        })
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
 }

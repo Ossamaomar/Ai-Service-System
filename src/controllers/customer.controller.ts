@@ -35,7 +35,6 @@ export class CustomerController {
   }
 
   static async searchCustomer(req: Request, res: Response, next: NextFunction) {
-    
     try {
       let customer: any = null;
 
@@ -88,6 +87,29 @@ export class CustomerController {
       res
         .status(200)
         .json(new ApiResponse({ status: "success", data: customer }));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  static async getCustomersOverview(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      if (Number(req.query.page) <= 0) {
+        throw new ApiError(400, "Please provide a valid page number");
+      }
+      const customers = await CustomerService.getCustomersOverview(req.query);
+
+      res.status(200).json(
+        new ApiResponse({
+          status: "success",
+          results: customers.length,
+          data: customers,
+        })
+      );
     } catch (error) {
       return next(error);
     }

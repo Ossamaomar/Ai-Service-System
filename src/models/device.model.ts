@@ -20,7 +20,21 @@ export class DeviceModel {
   }
 
   static async getAll(options: any) {
-    return await prisma.device.findMany(options);
+    let { customerPhone, ...whereOptions } = options.where;
+    if (!customerPhone) customerPhone = "";
+    return await prisma.device.findMany({
+      ...options,
+      where: {
+        ...whereOptions,
+        customer: {
+          phone: { contains: `${customerPhone}` || "" },
+        },
+      },
+
+      include: {
+        customer: true,
+      },
+    });
   }
 
   static async update(id: string, data: DeviceUpdateInput) {

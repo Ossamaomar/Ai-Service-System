@@ -4,7 +4,10 @@ import { CustomerCreateInputs } from "src/types";
 import { ApiError } from "src/utils/ApiError";
 import { APIFeatures } from "src/utils/ApiFeatures";
 import { validateData } from "src/utils/helpers";
-import { customerCreateSchema, customerUpdateSchema } from "src/utils/validation";
+import {
+  customerCreateSchema,
+  customerUpdateSchema,
+} from "src/utils/validation";
 
 export class CustomerService {
   static async create(inputs: CustomerCreateInputs) {
@@ -56,5 +59,11 @@ export class CustomerService {
     const customer = await CustomerModel.delete(id);
 
     return customer;
+  }
+
+  static async getCustomersOverview(reqQuery: any) {
+    const customers = await CustomerModel.getCustomersOverview(reqQuery);
+
+    return customers;
   }
 }

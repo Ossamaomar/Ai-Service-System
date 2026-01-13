@@ -8,9 +8,9 @@ router.use(AuthController.protectRoute);
 
 router
   .route("/")
-  .get(PartController.getAll)
+  .get(AuthController.authorizeRoute("ADMIN", "TECHNICIAN", "RECEPTIONIST", "STORE_MANAGER"), PartController.getAll)
   .post(
-    AuthController.authorizeRoute("ADMIN", "STORE_MANAGER"),
+    AuthController.authorizeRoute("ADMIN", "STORE_MANAGER", "TECHNICIAN"),
     PartController.create
   );
 
@@ -18,7 +18,7 @@ router
   .route("/:id")
   .get(PartController.get)
   .patch(
-    AuthController.authorizeRoute("ADMIN", "STORE_MANAGER"),
+    AuthController.authorizeRoute("ADMIN", "STORE_MANAGER", "TECHNICIAN"),
     PartController.update
   )
   .delete(

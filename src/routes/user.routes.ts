@@ -10,13 +10,23 @@ router
   .route("/currentUser")
   .get(UserController.getCurrentUser)
   .patch(
-    AuthController.authorizeRoute("ADMIN", "CUSTOMER"),
+    // AuthController.authorizeRoute("ADMIN", "CUSTOMER"),
     UserController.updateCurrentUser
   );
 
+router
+  .route("/")
+  .get(
+    AuthController.authorizeRoute("ADMIN", "RECEPTIONIST", "TECHNICIAN"),
+    UserController.getAll
+  )
+  .post(AuthController.authorizeRoute("ADMIN"), UserController.create);
+
+
+router.route("/techniciansOverview").get(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"), UserController.getTechniciansOverview)
+
 router.use(AuthController.authorizeRoute("ADMIN"));
 
-router.route("/").get(UserController.getAll).post(UserController.create);
 router.route("/search").get(UserController.get);
 router.route("/:id").patch(UserController.update).delete(UserController.delete);
 

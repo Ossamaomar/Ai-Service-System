@@ -163,6 +163,24 @@ export class TicketService {
 
     return tickets;
   }
+  
+  static async getAllTicketsForTechnician(query: any, id: string) {
+    // if (id) {
+    //   query.customerId = id;
+    // }
+    const options = new APIFeatures(query).filter().sort().select().paginate();
+
+    const tickets = await TicketModel.getAllForTechnician(options.options, id);
+
+    return tickets;
+  }  
+  
+  static async assignForCurrentTechnician(id: string, techId: string) {
+
+    const tickets = await TicketModel.assignTicket(id, techId);
+
+    return tickets;
+  }
 
   static async updateTicket(id: string, data: TicketUpdateInput, user: User) {
     const validatedData = validateData(updateTicketSchema, data);

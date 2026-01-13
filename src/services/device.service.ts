@@ -1,10 +1,13 @@
 import { DeviceCreateInput, DeviceUpdateInput } from "generated/prisma/models";
 import { DeviceModel } from "src/models/device.model";
 import { APIFeatures } from "src/utils/ApiFeatures";
+import { validateData } from "src/utils/helpers";
+import { createDeviceSchema } from "src/validators/ticketValidators";
 
 export class DeviceService {
   static async createDevice(data: DeviceCreateInput) {
-    const device = await DeviceModel.create(data);
+    const validatedData = validateData(createDeviceSchema, data);
+    const device = await DeviceModel.create(validatedData);
 
     return device;
   }
@@ -21,7 +24,7 @@ export class DeviceService {
 
     return device;
   }
-  
+
   static async getDeviceBySerialNumber(serialNumber: string) {
     const device = await DeviceModel.getBySerialNumber(serialNumber);
 
@@ -29,7 +32,8 @@ export class DeviceService {
   }
 
   static async updateDevice(id: string, data: DeviceUpdateInput) {
-    const device = await DeviceModel.update(id, data);
+    const validatedData = validateData(createDeviceSchema, data);
+    const device = await DeviceModel.update(id, validatedData);
 
     return device;
   }

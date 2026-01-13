@@ -90,6 +90,8 @@ model User {
 
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt @default(now())
+
+  
 }
 
 model Customer {  
@@ -159,13 +161,15 @@ model Part {
   sellingPrice    Float
   quantity        Int           @default(0)
   minimumQuantity Int           @default(0)
-
+  branch          Branches
   // Relations
   ticketParts     TicketPart[]
   // partRequests    PartRequest[] // if technician requested this part
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@unique([name, branch])
 }
 
 model TicketPart {
@@ -226,7 +230,7 @@ model Device {
   customer       Customer     @relation(fields: [customerId], references: [id])
   customerId     String
   createdAt      DateTime     @default(now())
-}
+}         
 
 
 

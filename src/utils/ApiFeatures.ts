@@ -6,6 +6,7 @@ export class APIFeatures {
     where: any;
     orderBy: any;
     select?: any;
+    include?: any;
   };
   constructor(query: any) {
     this.query = query;
@@ -16,6 +17,7 @@ export class APIFeatures {
       where: {},
       orderBy: {},
       select: {},
+      include: {},
     };
   }
 
@@ -34,16 +36,47 @@ export class APIFeatures {
       );
     };
 
-    const convertNumericFilters = (obj: any): any => {
+    const convertFilters = (obj: any): any => {
       if (!obj || typeof obj !== "object") return obj;
 
       for (const [key, value] of Object.entries(obj)) {
-        // Skip null or undefined values
         if (value == null) continue;
 
-        // Case 1: Value is an object (could be nested filters like {gt: "100"} or nested queries)
+        // Special case: deviceCode -> use `contains` instead of equals
+        if (key === "deviceCode") {
+          obj[key] =
+            typeof value === "object" && !Array.isArray(value)
+              ? { ...value } // already nested operators, leave as is
+              : { contains: value };
+          continue;
+        }
+        
+        if (key === "ticketNumber") {
+          obj[key] =
+            typeof value === "object" && !Array.isArray(value)
+              ? { ...value } // already nested operators, leave as is
+              : { contains: value };
+          continue;
+        }
+
+        if (key === "phone") {
+          obj[key] =
+            typeof value === "object" && !Array.isArray(value)
+              ? { ...value } // already nested operators, leave as is
+              : { contains: value };
+          continue;
+        }
+
+        if (key === "name") {
+          obj[key] =
+            typeof value === "object" && !Array.isArray(value)
+              ? { ...value } // already nested operators, leave as is
+              : { contains: value };
+          continue;
+        }
+
+        // Nested operator objects (gt, gte, lt, lte, equals, in, notIn, etc.)
         if (typeof value === "object" && !Array.isArray(value)) {
-          // Check if it's a filter operator object (gt, gte, lt, lte, etc.)
           const operators = [
             "gt",
             "gte",
@@ -59,50 +92,44 @@ export class APIFeatures {
           );
 
           if (hasOperators) {
-            // Process operator values
             for (const [op, opValue] of Object.entries(value)) {
               if (opValue == null) continue;
 
-              // Handle array values (for 'in' and 'notIn' operators)
               if (Array.isArray(opValue)) {
                 obj[key][op] = opValue.map((v) =>
-                  isNumericString(v) ? Number(v) : v
+                  !isNaN(Number(v)) ? Number(v) : v
                 );
-              }
-              // Handle single values
-              else if (isNumericString(opValue)) {
+              } else if (!isNaN(Number(opValue))) {
                 obj[key][op] = Number(opValue);
-              }
-              // Handle nested objects recursively
-              else if (typeof opValue === "object") {
-                convertNumericFilters(opValue);
+              } else if (typeof opValue === "object") {
+                convertFilters(opValue);
               }
             }
           } else {
-            // It's a nested query (like relations), recurse into it
-            convertNumericFilters(value);
+            // Recurse into nested objects (relations, etc.)
+            convertFilters(value);
           }
         }
-        // Case 2: Value is an array
+        // Array values
         else if (Array.isArray(value)) {
           obj[key] = value.map((v) =>
-            isNumericString(v)
+            !isNaN(Number(v))
               ? Number(v)
               : typeof v === "object"
-              ? convertNumericFilters(v)
+              ? convertFilters(v)
               : v
           );
         }
-        // Case 3: Direct value - convert if numeric string
-        else if (isNumericString(value)) {
-          obj[key] = Number(value);
-        }
+        // Direct numeric string -> convert
+        // else if (!isNaN(Number(value))) {
+        //   obj[key] = Number(value);
+        // }
       }
 
       return obj;
     };
 
-    convertNumericFilters(queryObj);
+    convertFilters(queryObj);
     console.log(queryObj);
     this.options.where = queryObj;
     return this;
@@ -155,6 +182,47 @@ export class APIFeatures {
     const skip = (page - 1) * take;
     this.options.skip = skip;
     this.options.take = take;
+
+    return this;
+  }
+
+  include() {
+    if (this.query?.include) {
+      const includeStr = this.query.include as string;
+
+      // Split by comma to handle multiple includes: "assignedTech,customer,device"
+      const includeArr = includeStr.split(",").map((s) => s.trim());
+
+      const includeObj: any = {};
+
+      includeArr.forEach((relation) => {
+        // Handle nested includes with dot notation: "assignedTech.user"
+        if (relation.includes(".")) {
+          const parts = relation.split(".");
+          let current = includeObj;
+
+          parts.forEach((part, index) => {
+            if (index === parts.length - 1) {
+              // Last part
+              current[part] = true;
+            } else {
+              // Create nested structure
+              if (!current[part]) {
+                current[part] = { include: {} };
+              }
+              current = current[part].include;
+            }
+          });
+        } else {
+          // Simple include
+          includeObj[relation] = true;
+        }
+      });
+
+      this.options.include = includeObj;
+    } else {
+      delete this.options.include;
+    }
 
     return this;
   }

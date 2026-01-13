@@ -21,9 +21,23 @@ export class PartService {
   }
 
   static async getAllParts(query: any) {
-    const options = new APIFeatures(query).filter().sort().select().paginate();
+    let options;
+    if (query.page) {
+      options = new APIFeatures(query).filter().sort().select().paginate();
+    } else {
+      options = new APIFeatures(query).filter();
+      const {
+        include: _,
+        select: __,
+        skip: ___,
+        take: _____,
+        ...restOptions
+      } = options.options;
+      options = { options: restOptions };
+      console.log(options);
+    }
     const parts = await PartModel.getAll(options.options);
-
+    console.log(parts);
     return parts;
   }
 
@@ -37,7 +51,7 @@ export class PartService {
     const validatedData = validateData(updatePartSchema, data);
 
     const prismaData = normalizeNullable(validatedData);
-    
+
     const part = await PartModel.update(id, prismaData);
 
     return part;
