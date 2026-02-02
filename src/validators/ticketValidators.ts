@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { TicketStatus, Branches } from "generated/prisma/enums.js";
-import { cleanUndefined } from "src/utils/helpers";
-export const DeviceTypeEnum = z.enum(["LAPTOP", "CAMERA", "PRINTER", "OTHER"], {
+export const DeviceTypeEnum = z.enum(["LAPTOP", "CAMERA", "PRINTER", "DESKTOP", "NETWORK", "OTHER"], {
   error: "Please select a valid device type",
 });
 export const createTicketSchema = z.object({
@@ -9,6 +8,7 @@ export const createTicketSchema = z.object({
   deviceId: z.cuid("Invalid device ID"),
   customerId: z.cuid("Invalid customer ID"),
   assignedTechId: z.cuid("Invalid technician ID").optional().nullable(),
+  assignedAt: z.date().optional(),
 
   // Ticket details
   status: z.enum(TicketStatus).optional().default(TicketStatus.RECEIVED),
@@ -27,18 +27,29 @@ export const createTicketSchema = z.object({
 });
 
 export const createDeviceSchema = z.object({
-  serialNumber: z.string().optional(),
-
-  type: DeviceTypeEnum,
-  otherType: z.string().optional(),
-  brand: z.string("The brand name is required").min(2, "Enter a valid brand name"),
-  model: z.string("The model name is required").min(1, "Enter a valid model name"),
-  color: z.string("The color name is required").min(3, "Enter a valid color name"),
-  customerId: z.cuid("Invalid customer ID"),
+  serialNumber: z.string().optional().nullable(),
+  deviceCode: z.string(), // Will be set by the service
+  type: z.enum(["LAPTOP", "CAMERA", "PRINTER", "DESKTOP", "NETWORK", "OTHER"]),
+  otherType: z.string().optional().nullable(),
+  brand: z.string().min(1, "Brand is required"),
+  model: z.string().optional().nullable(),
+  color: z.string().min(1, "Color is required"),
+  customerId: z.string().cuid("Invalid customer ID"), // Accept customerId
 });
+
+// Type for the input (what you receive)
+export type DeviceCreateInput = z.infer<typeof createDeviceSchema>;
+
+// Type for Prisma (what Prisma expects)
+export type DevicePrismaInput = Omit<DeviceCreateInput, "customerId"> & {
+  customer: {
+    connect: { id: string };
+  };
+};
 
 export const updateTicketSchema = z.object({
   assignedTechId: z.cuid("Invalid technician ID").optional(),
+  assignedAt: z.date().optional(),
   status: z.enum(TicketStatus).optional(),
   urgent: z.boolean().optional(),
   branch: z.enum(Branches).optional(),

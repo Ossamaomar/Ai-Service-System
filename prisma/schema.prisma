@@ -46,12 +46,15 @@ enum TechnicianTicketStatus {
   UNDER_REPAIR
   WAITING_APPROVAL
   WAITING_PARTS 
+  CANCELLED
 }
 
 enum DeviceType {
   LAPTOP
   CAMERA
   PRINTER
+  DESKTOP
+  NETWORK
   OTHER
 }
 
@@ -116,7 +119,6 @@ model Ticket {
   id               String       @id @default(cuid())
   
   ticketNumber     String       @unique   // SG-2025-0001 (generated in backend)
-  deviceCode       String       @unique   // SJ-A8X92KD992
 
   // Relations
   device           Device     @relation(fields: [deviceId], references: [id])
@@ -127,7 +129,7 @@ model Ticket {
 
   assignedTech     User?        @relation("AssignedTechnician", fields: [assignedTechId], references: [id])
   assignedTechId   String?
-
+  assignedAt       DateTime?
 
   status           TicketStatus @default(RECEIVED)
   urgent           Boolean      @default(false)
@@ -141,7 +143,6 @@ model Ticket {
   hasScratches     Boolean      @default(false)
   wantsBackup      Boolean      @default(false)
   underWarranty    Boolean      @default(false)
-
 
   parts            TicketPart[]
   repairs          TicketRepair[]
@@ -221,6 +222,7 @@ model TicketRepair {
 model Device {
   id             String       @id @default(cuid())
   serialNumber   String?      @unique  // <--- correct
+  deviceCode     String       @unique
   type           DeviceType
   otherType      String?
   brand          String

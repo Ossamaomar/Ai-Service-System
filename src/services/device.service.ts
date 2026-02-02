@@ -1,13 +1,39 @@
-import { DeviceCreateInput, DeviceUpdateInput } from "generated/prisma/models";
+import { Prisma } from "generated/prisma/client";
+import { DeviceUpdateInput } from "generated/prisma/models";
 import { DeviceModel } from "src/models/device.model";
 import { APIFeatures } from "src/utils/ApiFeatures";
-import { validateData } from "src/utils/helpers";
-import { createDeviceSchema } from "src/validators/ticketValidators";
+import { generateDeviceCode, validateData } from "src/utils/helpers";
+import {
+  createDeviceSchema,
+  DeviceCreateInput,
+} from "src/validators/ticketValidators";
 
 export class DeviceService {
-  static async createDevice(data: DeviceCreateInput) {
-    const validatedData = validateData(createDeviceSchema, data);
-    const device = await DeviceModel.create(validatedData);
+  static async createDevice(data: Omit<DeviceCreateInput, "deviceCode">) {
+    // Generate device code
+    const deviceCode = generateDeviceCode();
+
+    // Validate input data
+    const validatedData = validateData(createDeviceSchema, {
+      ...data,
+      deviceCode,
+    });
+
+    // Transform to Prisma format
+    const prismaData: Prisma.DeviceCreateInput = {
+      deviceCode: validatedData.deviceCode,
+      serialNumber: validatedData.serialNumber,
+      type: validatedData.type,
+      otherType: validatedData.otherType,
+      brand: validatedData.brand,
+      model: validatedData.model,
+      color: validatedData.color,
+      customer: {
+        connect: { id: validatedData.customerId },
+      },
+    };
+
+    const device = await DeviceModel.create(prismaData);
 
     return device;
   }

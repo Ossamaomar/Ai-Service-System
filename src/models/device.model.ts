@@ -2,9 +2,9 @@ import { DeviceCreateInput, DeviceUpdateInput } from "generated/prisma/models";
 import { prisma } from "src/config/database";
 
 export class DeviceModel {
-  static async create(data: DeviceCreateInput) {
-    return await prisma.device.create({ data });
-  }
+    static async create(data: DeviceCreateInput) {
+      return await prisma.device.create({ data });
+    }
 
   static async get(id: string) {
     return await prisma.device.findUnique({

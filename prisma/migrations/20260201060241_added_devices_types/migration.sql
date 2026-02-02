@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `device` MODIFY `type` ENUM('LAPTOP', 'CAMERA', 'PRINTER', 'DESKTOP', 'NETWORK', 'OTHER') NOT NULL;

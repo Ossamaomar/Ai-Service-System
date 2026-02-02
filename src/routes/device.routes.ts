@@ -17,8 +17,8 @@ router
 router
   .route("/:id")
   .get(DeviceController.getById)
-  .patch(DeviceController.update)
-  .delete(DeviceController.delete);
+  .patch(AuthController.authorizeRoute("ADMIN", "RECEPTIONIST"), DeviceController.update)
+  .delete(AuthController.authorizeRoute("ADMIN"), DeviceController.delete);
 
 router
   .route("/serialNumber/:serialNumber")
